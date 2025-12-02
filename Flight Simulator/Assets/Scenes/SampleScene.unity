@@ -2719,6 +2719,7 @@ GameObject:
   - component: {fileID: 1619246228}
   - component: {fileID: 1619246227}
   - component: {fileID: 1619246226}
+  - component: {fileID: 1619246230}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -2770,7 +2771,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 5e72fad2e3a868a479166663d31a94f1, type: 2}
+  - {fileID: 2100000, guid: 1b8b99f955850964a9a8e42832bde3bf, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2815,6 +2816,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1619246230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1619246225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27db56a85c4402b40ae326b217081f3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetRenderer: {fileID: 1619246227}
+  tilingMin: {x: 1, y: 1}
+  tilingMax: {x: 3, y: 3}
 --- !u!1 &1827129726
 GameObject:
   m_ObjectHideFlags: 0
