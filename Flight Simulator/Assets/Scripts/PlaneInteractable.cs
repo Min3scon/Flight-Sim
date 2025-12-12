@@ -18,7 +18,7 @@ public class PlaneInteractable : MonoBehaviour, IInteractable
     MovementManager playerMovement;
     Camera playerCamera;
     InteractableController interactableController;
-    bool isInside = false;
+    bool isInside;
 
     public string InteractMessage => isInside ? "Press E to Exit" : "Press E to Enter";
 
@@ -31,7 +31,6 @@ public class PlaneInteractable : MonoBehaviour, IInteractable
         planeController.enabled = false;
         FindUITexts();
         TogglePlaneHUD(false);
-        Debug.Log($"PlaneInteractable Start - interactableController found: {interactableController != null}");
     }
 
     void FindUITexts()
@@ -41,7 +40,6 @@ public class PlaneInteractable : MonoBehaviour, IInteractable
         altitudeText = GameObject.Find("altitude")?.GetComponent<TextMeshProUGUI>();
         fuelHud = GameObject.Find("FuelText")?.GetComponent<TextMeshProUGUI>();
         progressText = GameObject.Find("checkpoints")?.GetComponent<TextMeshProUGUI>();
-        Debug.Log($"FindUITexts - interactionText found: {interactionText != null}");
     }
 
     void TogglePlaneHUD(bool show)
@@ -49,7 +47,7 @@ public class PlaneInteractable : MonoBehaviour, IInteractable
         if (speedText != null) speedText.gameObject.SetActive(show);
         if (altitudeText != null) altitudeText.gameObject.SetActive(show);
         if (fuelHud != null) fuelHud.gameObject.SetActive(show);
-        if (progressText != null) progressText.gameObject.SetActive(show);
+        if (progressText != null) progressText.gameObject.SetActive(!show);
         if (interactionText != null) interactionText.gameObject.SetActive(!show);
     }
 
@@ -63,50 +61,29 @@ public class PlaneInteractable : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        if (!isInside)
-            EnterPlane();
-        else
-            ExitPlane();
+        if (!isInside) EnterPlane();
+        else ExitPlane();
     }
 
     void EnterPlane()
     {
-        Debug.Log("EnterPlane called");
-        if (interactionText != null)
-        {
-            Debug.Log($"Clearing interaction text. Current text: '{interactionText.text}'");
-            interactionText.text = "";
-            Debug.Log($"After clearing: '{interactionText.text}'");
-        }
-        else
-        {
-            Debug.LogWarning("interactionText is NULL!");
-        }
-        
+        if (interactionText != null) interactionText.text = "";
+
         player.SetActive(false);
         planeCamera.gameObject.SetActive(true);
         planeController.enabled = true;
         isInside = true;
         TogglePlaneHUD(true);
-        
-        if (interactableController != null)
-        {
-            Debug.Log("Disabling InteractableController");
-            interactableController.enabled = false;
-        }
-        else
-        {
-            Debug.LogWarning("interactableController is NULL!");
-        }
-        
-        if (fuelBarCanvas != null)
-        {
-            fuelBarCanvas.SetActive(false);
-        }
-        if (progressText != null)
+
+        if (interactableController != null) interactableController.enabled = false;
+        if (fuelBarCanvas != null) fuelBarCanvas.SetActive(false);
+
+        var detector = FindCheckpointDetector();
+        if (progressText != null && detector != null)
         {
             progressText.gameObject.SetActive(true);
-            progressText.text = FindObjectOfType<CheckpointDetector>()?.progressText.text;
+            if (detector.ProgressText != null)
+                progressText.text = detector.ProgressText.text;
         }
     }
 
@@ -117,13 +94,16 @@ public class PlaneInteractable : MonoBehaviour, IInteractable
         planeController.enabled = false;
         isInside = false;
         TogglePlaneHUD(false);
-        if (interactableController != null)
-        {
-            interactableController.enabled = true;
-        }
-        if (fuelBarCanvas != null)
-        {
-            fuelBarCanvas.SetActive(true);
-        }
+        if (interactableController != null) interactableController.enabled = true;
+        if (fuelBarCanvas != null) fuelBarCanvas.SetActive(true);
+    }
+
+    CheckpointDetector FindCheckpointDetector()
+    {
+#if UNITY_2023_1_OR_NEWER
+        return Object.FindFirstObjectByType<CheckpointDetector>();
+#else
+        return Object.FindObjectOfType<CheckpointDetector>();
+#endif
     }
 }

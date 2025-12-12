@@ -12,8 +12,37 @@ public class PlaneController : MonoBehaviour
     [SerializeField] TextMeshProUGUI speedText;
     [SerializeField] TextMeshProUGUI altitudeText;
 
+    [Header("Audio (engine only)")]
+    [SerializeField] AudioClip engineClip;
+    [SerializeField] AudioSource engineSource; 
+    [SerializeField] float minPitch = 0.8f;
+    [SerializeField] float maxPitch = 1.6f;
+    [SerializeField, Range(0f, 1f)] float minVolume = 0.2f;
+    [SerializeField, Range(0f, 1f)] float maxVolume = 1f;
+
     public float currentSpeed = 0f;
-    private float Yaw;
+    float yaw;
+
+    void Start()
+    {
+        if (engineSource == null)
+        {
+            var go = new GameObject("PlaneEngineAudio");
+            go.transform.SetParent(transform);
+            go.transform.localPosition = Vector3.zero;
+            engineSource = go.AddComponent<AudioSource>();
+        }
+
+        engineSource.playOnAwake = false;
+        engineSource.loop = true;
+        engineSource.clip = engineClip;
+        engineSource.spatialBlend = 1f;
+        engineSource.rolloffMode = AudioRolloffMode.Logarithmic;
+        engineSource.minDistance = 5f;
+        engineSource.maxDistance = 500f;
+
+        if (engineClip != null) engineSource.Play();
+    }
 
     void Update()
     {
@@ -32,13 +61,12 @@ public class PlaneController : MonoBehaviour
             if (currentSpeed < 0f) currentSpeed = 0f;
         }
 
-        Yaw += horizontalInput * YawAmount * Time.deltaTime;
+        yaw += horizontalInput * YawAmount * Time.deltaTime;
 
         float pitch = -verticalInput * PitchAmount;
         float roll = -horizontalInput * RollAmount;
 
-        transform.rotation = Quaternion.Euler(pitch, Yaw, roll);
-
+        transform.rotation = Quaternion.Euler(pitch, yaw, roll);
         transform.position += transform.forward * currentSpeed * Time.deltaTime;
 
         if (speedText != null)
@@ -51,5 +79,18 @@ public class PlaneController : MonoBehaviour
         {
             altitudeText.text = "Height: " + Mathf.RoundToInt(transform.position.y) + " M";
         }
+
+        UpdateEngineAudio(throttle);
+    }
+
+    void UpdateEngineAudio(bool throttle)
+    {
+        if (engineSource == null || engineClip == null) return;
+
+        float t = MaxSpeed > 0f ? Mathf.Clamp01(currentSpeed / MaxSpeed) : 0f;
+        engineSource.pitch = Mathf.Lerp(minPitch, maxPitch, t);
+        engineSource.volume = Mathf.Lerp(minVolume, maxVolume, throttle ? Mathf.Max(t, 0.3f) : t);
+
+        if (!engineSource.isPlaying) engineSource.Play();
     }
 }

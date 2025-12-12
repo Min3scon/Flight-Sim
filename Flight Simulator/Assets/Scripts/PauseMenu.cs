@@ -1,40 +1,79 @@
 using UnityEngine;
-using System.Collections;
 
-public class PauseP : MonoBehaviour {
+public class PauseMenu : MonoBehaviour
+{
+    public static bool GameIsPaused;
 
-    bool  paused = false;
-    private GameOverScriptP PauseMenu;
+    [SerializeField] GameObject pauseMenuUI;
+    [SerializeField] MonoBehaviour[] disableWhilePaused;
 
-    void Start ()
+    struct BehaviourState
     {
-       
-        PauseMenu = GetComponent<GameOverScriptP> ();
-       
+        public MonoBehaviour behaviour;
+        public bool wasEnabled;
     }
-   
-    void  Update (){
 
-        if(Input.GetKeyDown (KeyCode.P))
+    BehaviourState[] cachedStates;
+
+    void Start()
+    {
+        CacheStates();
+        SetPaused(false);
+    }
+
+    void CacheStates()
+    {
+        cachedStates = new BehaviourState[disableWhilePaused.Length];
+        for (int i = 0; i < disableWhilePaused.Length; i++)
+        {
+            cachedStates[i] = new BehaviourState
+            {
+                behaviour = disableWhilePaused[i],
+                wasEnabled = disableWhilePaused[i] != null && disableWhilePaused[i].enabled
+            };
+        }
+    }
+
+    void Update()
+    {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-
-            if(!paused){
-
-                Time.timeScale = 0;
-                paused=true;
-                PauseMenu.enabled = true;
-
-
-            }else{
-
-                Time.timeScale = 1;
-                paused=false;
-                PauseMenu.enabled = false;
-               
-            }
+            SetPaused(!GameIsPaused);
         }
-
     }
 
+    void SetPaused(bool paused)
+    {
+        GameIsPaused = paused;
+        Time.timeScale = paused ? 0f : 1f;
+
+        if (pauseMenuUI) pauseMenuUI.SetActive(paused);
+        Cursor.lockState = paused ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = paused;
+
+        if (paused)
+        {
+            for (int i = 0; i < disableWhilePaused.Length; i++)
+            {
+                if (disableWhilePaused[i])
+                {
+                    cachedStates[i].wasEnabled = disableWhilePaused[i].enabled;
+                    disableWhilePaused[i].enabled = false;
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < cachedStates.Length; i++)
+            {
+                if (cachedStates[i].behaviour)
+                {
+                    cachedStates[i].behaviour.enabled = cachedStates[i].wasEnabled;
+                }
+            }
+        }
+    }
+
+    public void Resume() => SetPaused(false);
+    public void Pause() => SetPaused(true);
 }
